@@ -206,9 +206,117 @@ int local_alignment(const std::string & string1,
 	int best_score = 0;
 	matchString1 = "";
 	matchString2 = "";
+	int n = string1.size();
+	int m = string2.size();
+	int ** d = new int*[n+1];
+	char ** b = new char*[n+1];
+	for( int i; i < n+2; i++)
+	{
+		d[i] = new int[m+1];
+		b[i] = new char[m+1];
+	}
+	for (int i = 0; i < n+1; i++)
+	{
+		for (int j = 0; j < m+1; i++)
+		{
+			d[i][j] = 0;
+			b[i][j] = '?';
+		}
+	}
+	for (int i = 1; i < n+1; i++)
+	{
+		for (int j = 1; j < m+1; i++)
+		{
+			int up = d[i-1][j] + bpa.get_penalty( string1[i-1], '*');
+			int left = d[i][j-1] + bpa.get_penalty( '*', string2[j-1]);
+			int diag = d[i-1][j-1] + bpa.get_penalty( string1[i-1], string2[j-1]);
+			if (left > up)
+			{
+				if (left > diag)
+				{
+					b[i][j] = 'l';
+					d[i][j] = left;
+				}
+				else 
+				{
+					b[i][j] = 'd';
+					d[i][j] = diag;
+				}
+			}
+			else
+			{
+				if ( up > diag)
+				{
+					b[i][j] = 'u';
+					d[i][j] = up;
+				}
+				else
+				{
+					b[i][j] = 'd';
+					d[i][j] = diag;
+				}
+			}
+			if (d[i][j] < 0) 
+			{
+				d[i][j] = 0;
+			}
+			
+				
+		}
+	}
+	int best_i = string1.size();
+	int best_j = 0;
+	for (int j = 1; j < m+1; j++)
+	{
+		if( d[best_i][j] > best_score)
+		{
+			best_score = d[best_i][j];
+			best_j = j;
+		}
+	}
+	bool done = false;
+	int i = best_i;
+	int j = best_j;
+	while (!done)
+	{
+		if (b[i][j] == 'u')
+		{
+			matchString1 += string1[i-1];
+			matchString2 += "*";
+			i--;
+		}
+		else if (b[i][j] == 'l')
+		{
+			matchString1 += "*";
+			matchString2 += string2[j-1];
+			j--;
+		}
+		else if (b[i][j] == 'd')
+		{
+			matchString1 += string1[i-1];
+			matchString2 += string2[j-1];
+			i--;
+			j--;
+		}
+		else if (b[i][j] == '?')
+		{
+			done = true;
+		}
+	}
+	std::string temp1 = "";
+	for (int x =matchString1.size()-1; x >= 0; x--)
+	{
+		temp1 += matchString1[x];
+	}
+	std::string temp2 = "";
+	for (int x =matchString2.size()-1; x >= 0; x--)
+	{
+		temp2 += matchString2[x];
+	}	
+	matchString1 = temp1;
+	matchString2 = temp2;
 	return best_score;
 }
-
 // -------------------------------------------------------------------------
 std::shared_ptr<Protein> local_alignment_best_match(
 					ProteinVector & proteins, 
